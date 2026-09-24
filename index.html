@@ -1,0 +1,1089 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Penilaian Kerusakan Lahan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+/* ===== TOKENS ===== */
+:root {
+  color-scheme: light;
+  --bg: #eef2f7;
+  --bg-alt: #e4ecf5;
+  --surface: #ffffff;
+  --surface-2: #f5f8fc;
+  --text-1: #0d1b2a;
+  --text-2: #3a5168;
+  --text-3: #7990a8;
+  --accent: #1a6b3c;
+  --accent-hi: #219150;
+  --accent-faint: #dff0e8;
+  --border: #c3d3e0;
+  --border-subtle: #dde8f0;
+  --cls-none: #27ae60;
+  --cls-mid: #e67e22;
+  --cls-sev: #c0392b;
+  --cls-none-bg: rgba(39,174,96,.11);
+  --cls-mid-bg: rgba(230,126,34,.11);
+  --cls-sev-bg: rgba(192,57,43,.11);
+  --hero: #0b1622;
+  --lb-scrim: rgba(11,22,34,.93);
+  --lb-fg: #9fb6cc;
+  --shadow: 0 2px 14px rgba(13,27,42,.07);
+  --shadow-md: 0 5px 28px rgba(13,27,42,.11);
+  --r: 10px;
+  --f-d: 'DM Serif Display', Georgia, serif;
+  --f-b: 'IBM Plex Sans', system-ui, sans-serif;
+  --f-m: 'IBM Plex Mono', 'Courier New', monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0b1622; --bg-alt: #0f1d2e; --surface: #112030; --surface-2: #142438;
+    --text-1: #d6e4f2; --text-2: #86a4be; --text-3: #567898;
+    --accent: #3ec070; --accent-hi: #2ea55e; --accent-faint: #0c2517;
+    --border: #1c3858; --border-subtle: #172c44;
+    --shadow: 0 2px 14px rgba(0,0,0,.32); --shadow-md: 0 5px 28px rgba(0,0,0,.42);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1622; --bg-alt: #0f1d2e; --surface: #112030; --surface-2: #142438;
+  --text-1: #d6e4f2; --text-2: #86a4be; --text-3: #567898;
+  --accent: #3ec070; --accent-hi: #2ea55e; --accent-faint: #0c2517;
+  --border: #1c3858; --border-subtle: #172c44;
+  --shadow: 0 2px 14px rgba(0,0,0,.32); --shadow-md: 0 5px 28px rgba(0,0,0,.42);
+}
+
+/* ===== BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--f-b);
+  background: var(--bg);
+  color: var(--text-1);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; display: block; }
+
+/* ===== FIXED UI ===== */
+.theme-btn {
+  position: fixed; top: 16px; right: 16px; z-index: 300;
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: var(--surface);
+  color: var(--text-2); cursor: pointer; display: flex;
+  align-items: center; justify-content: center; font-size: 15px;
+  box-shadow: var(--shadow); transition: all .2s;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.prog-nav {
+  position: fixed; right: 18px; top: 50%; transform: translateY(-50%);
+  z-index: 200; display: flex; flex-direction: column; gap: 9px;
+}
+.prog-nav button {
+  width: 8px; height: 8px; border-radius: 50%; padding: 0;
+  border: 2px solid var(--text-3); background: transparent;
+  cursor: pointer; transition: all .22s;
+}
+.prog-nav button.on { background: var(--accent); border-color: var(--accent); transform: scale(1.45); }
+.prog-nav button:hover { border-color: var(--accent); }
+
+/* ===== SECTION SCAFFOLD ===== */
+section { padding-inline: max(16px, 5vw); padding-block: 96px; min-height: 100vh; }
+.inner { max-width: 900px; margin-inline: auto; }
+
+.s-label {
+  font-family: var(--f-m); font-size: 11px; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 11px;
+}
+.s-title {
+  font-family: var(--f-d); font-size: clamp(1.9rem,4vw,2.9rem);
+  line-height: 1.18; text-wrap: balance; color: var(--text-1); margin-bottom: 18px;
+}
+.s-lead {
+  font-size: 1.05rem; color: var(--text-2); max-width: 640px;
+  line-height: 1.72; margin-bottom: 44px;
+}
+
+/* ===== REVEAL ===== */
+.rv { opacity: 0; transform: translateY(26px); transition: opacity .58s ease, transform .58s ease; }
+.rv.in { opacity: 1; transform: none; }
+.d1 { transition-delay: .1s; } .d2 { transition-delay: .2s; }
+.d3 { transition-delay: .3s; } .d4 { transition-delay: .4s; }
+.d5 { transition-delay: .5s; }
+
+/* ===== HERO ===== */
+#s0 {
+  background: var(--hero); color: #d4e2f0;
+  display: flex; flex-direction: column; justify-content: center;
+  position: relative; overflow: hidden; padding-block: 0;
+}
+#hc { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .42; }
+.h-inner {
+  position: relative; z-index: 2; max-width: 860px;
+  margin-inline: auto; padding-inline: max(16px,5vw);
+  padding-block: 108px 88px;
+}
+.h-kicker {
+  font-family: var(--f-m); font-size: 11px; letter-spacing: .14em;
+  text-transform: uppercase; color: #27ae60; margin-bottom: 15px;
+  display: flex; align-items: center; gap: 9px;
+}
+.h-kicker::before { content:''; width:22px; height:1.5px; background:#27ae60; }
+h1.h-title {
+  font-family: var(--f-d); font-size: clamp(2.2rem,5.2vw,3.7rem);
+  line-height: 1.13; text-wrap: balance; color: #e6f2fb; margin-bottom: 18px;
+}
+h1.h-title em { font-style: italic; color: #27ae60; }
+.h-sub { font-size: 1rem; color: rgba(212,226,240,.68); max-width: 560px; line-height: 1.72; margin-bottom: 40px; }
+.h-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.h-tag {
+  font-family: var(--f-m); font-size: 11px; color: rgba(212,226,240,.5);
+  letter-spacing: .05em; padding: 5px 11px;
+  border: 1px solid rgba(212,226,240,.15); border-radius: 4px;
+}
+.h-scroll {
+  margin-top: 56px; display: flex; align-items: center; gap: 10px;
+  font-family: var(--f-m); font-size: 10px; letter-spacing: .1em;
+  color: rgba(212,226,240,.3);
+}
+.h-scroll-line { width: 36px; height: 1px; background: rgba(212,226,240,.2); }
+
+/* ===== STAT ROW ===== */
+.stat-row { display: grid; grid-template-columns: repeat(auto-fit,minmax(148px,1fr)); gap: 14px; margin-bottom: 36px; }
+.stat-tile {
+  background: var(--surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--r); padding: 22px 18px; box-shadow: var(--shadow);
+}
+.stat-tile .num { font-family: var(--f-d); font-size: 2rem; line-height: 1; color: var(--text-1); }
+.stat-tile .lbl { font-size: .76rem; color: var(--text-3); margin-top: 6px; }
+
+/* class chips */
+.chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 13px; border-radius: 100px; font-size: .82rem; font-weight: 500;
+}
+.chip-dot { width: 9px; height: 9px; border-radius: 50%; }
+.cn { background: var(--cls-none-bg); color: var(--cls-none); }
+.cm { background: var(--cls-mid-bg); color: var(--cls-mid); }
+.cs { background: var(--cls-sev-bg); color: var(--cls-sev); }
+
+/* ===== DATA SECTION ===== */
+#s2 { background: var(--bg-alt); }
+.data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+@media (max-width: 640px) { .data-grid { grid-template-columns: 1fr; } }
+.data-nums { display: flex; flex-direction: column; gap: 18px; }
+.dn-item .big { font-family: var(--f-m); font-size: 1.7rem; color: var(--text-1); font-variant-numeric: tabular-nums; font-weight: 500; }
+.dn-item .desc { font-size: .8rem; color: var(--text-3); margin-top: 3px; }
+.split-card {
+  background: var(--surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--r); overflow: hidden; margin-top: 20px; box-shadow: var(--shadow);
+}
+.split-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 16px; border-bottom: 1px solid var(--border-subtle); font-size: .83rem;
+}
+.split-row:last-child { border-bottom: none; }
+.split-row .sl { color: var(--text-2); }
+.split-row .sv { font-family: var(--f-m); color: var(--text-1); font-weight: 500; }
+.chart-card {
+  background: var(--surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--r); padding: 22px; box-shadow: var(--shadow);
+}
+.chart-hd { font-size: .8rem; font-weight: 600; color: var(--text-2); margin-bottom: 14px; letter-spacing: .02em; }
+
+/* ===== PIPELINE ===== */
+#s3 { background: var(--bg); }
+.pipe { display: flex; flex-direction: column; margin-bottom: 44px; }
+.p-step { display: grid; grid-template-columns: 38px 1fr; gap: 15px; align-items: start; }
+.p-col { display: flex; flex-direction: column; align-items: center; }
+.p-node {
+  width: 36px; height: 36px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; font-family: var(--f-m);
+  font-size: .72rem; font-weight: 500; flex-shrink: 0; border: 2px solid;
+}
+.p-line { width: 2px; flex: 1; min-height: 28px; background: var(--border-subtle); margin-block: 4px; }
+.pn1, .pn2 { border-color: var(--cls-none); color: var(--cls-none); background: rgba(39,174,96,.1); }
+.pn3 { border-color: var(--cls-mid); color: var(--cls-mid); background: rgba(230,126,34,.1); }
+.pn4 { border-color: var(--cls-sev); color: var(--cls-sev); background: rgba(192,57,43,.1); }
+.p-body { padding-bottom: 30px; }
+.p-name { font-weight: 600; font-size: .93rem; color: var(--text-1); margin-bottom: 4px; }
+.p-desc { font-size: .82rem; color: var(--text-3); line-height: 1.52; }
+
+.feat-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(235px,1fr)); gap: 13px; margin-top: 28px; }
+.feat-card {
+  background: var(--surface); border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent); border-radius: var(--r);
+  padding: 15px 17px; box-shadow: var(--shadow);
+}
+.fc-num { font-family: var(--f-m); font-size: .7rem; color: var(--text-3); margin-bottom: 4px; }
+.fc-name { font-weight: 600; font-size: .87rem; color: var(--text-1); margin-bottom: 4px; }
+.fc-desc { font-size: .77rem; color: var(--text-3); line-height: 1.44; }
+
+/* ===== TUJUAN 1 ===== */
+#s4 { background: var(--bg-alt); }
+.chart-box {
+  background: var(--surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--r); padding: 26px; box-shadow: var(--shadow); margin-bottom: 22px;
+}
+.tbl {
+  width: 100%; border-collapse: collapse; font-size: .84rem;
+  background: var(--surface); border-radius: var(--r); overflow: hidden;
+  box-shadow: var(--shadow); margin-bottom: 18px;
+}
+.tbl th {
+  text-align: left; padding: 9px 13px; font-size: .72rem; font-weight: 600;
+  letter-spacing: .05em; text-transform: uppercase; color: var(--text-3);
+  background: var(--bg-alt); border-bottom: 1.5px solid var(--border);
+}
+.tbl td { padding: 10px 13px; border-bottom: 1px solid var(--border-subtle); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.tbl td:first-child { color: var(--text-1); }
+.tbl tr:last-child td { border-bottom: none; }
+.win { color: var(--accent) !important; font-weight: 600; }
+.neu { color: var(--text-3) !important; }
+
+.verdict {
+  background: var(--accent-faint); border: 1px solid rgba(26,107,60,.3);
+  border-radius: var(--r); padding: 17px 20px; font-size: .87rem;
+  color: var(--text-1); line-height: 1.62; margin-bottom: 16px;
+}
+.verdict .v-lbl {
+  font-family: var(--f-m); font-size: .7rem; letter-spacing: .1em;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 5px;
+}
+.cv-box {
+  background: var(--surface-2); border: 1px solid var(--border-subtle);
+  border-radius: var(--r); padding: 15px 18px; font-size: .82rem;
+}
+.cv-box .cv-t { font-weight: 600; color: var(--text-1); margin-bottom: 8px; }
+.cv-box ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.cv-box li { color: var(--text-2); display: flex; gap: 7px; }
+.cv-box li::before { content: '·'; color: var(--text-3); flex-shrink: 0; }
+
+/* ===== TUJUAN 2 ===== */
+#s5 { background: var(--bg); }
+.pct {
+  background: var(--surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow); margin-top: 22px; margin-bottom: 22px;
+}
+.pct-hd {
+  display: grid; grid-template-columns: 1fr repeat(3,auto); gap: 10px;
+  padding: 9px 16px; background: var(--bg-alt);
+  font-size: .72rem; font-weight: 600; color: var(--text-3);
+  letter-spacing: .05em; text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+.pct-row {
+  display: grid; grid-template-columns: 1fr repeat(3,auto);
+  gap: 10px; padding: 11px 16px; border-bottom: 1px solid var(--border-subtle);
+  font-size: .84rem; align-items: center;
+}
+.pct-row:last-child { border-bottom: none; }
+.cn-name { display: flex; align-items: center; gap: 7px; font-weight: 500; color: var(--text-1); }
+.c-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.mn { font-family: var(--f-m); font-variant-numeric: tabular-nums; color: var(--text-2); font-size: .81rem; }
+.mn-lo { color: var(--cls-sev); }
+
+.fi-wrap {
+  background: var(--surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--r); padding: 22px; box-shadow: var(--shadow);
+}
+.fi-hd { font-size: .82rem; font-weight: 600; color: var(--text-2); margin-bottom: 16px; }
+.fi-row { display: flex; align-items: center; gap: 12px; margin-bottom: 9px; }
+.fi-rank { font-family: var(--f-m); font-size: .7rem; color: var(--text-3); width: 18px; text-align: right; flex-shrink: 0; }
+.fi-lbl { font-size: .82rem; color: var(--text-1); width: 148px; flex-shrink: 0; }
+.fi-bw { flex: 1; height: 7px; background: var(--bg-alt); border-radius: 4px; overflow: hidden; }
+.fi-b { height: 100%; border-radius: 4px; background: var(--accent); transition: width .8s cubic-bezier(.4,0,.2,1); width: 0; }
+.fi-note { margin-top: 12px; font-size: .74rem; color: var(--text-3); font-style: italic; line-height: 1.5; }
+
+/* ===== TUJUAN 3 ===== */
+#s6 { background: var(--bg-alt); }
+.sc-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(175px,1fr)); gap: 15px; margin-bottom: 28px; }
+.sc {
+  background: var(--surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--r); padding: 20px 16px; box-shadow: var(--shadow); text-align: center;
+}
+.sc.hl { border-color: var(--accent); }
+.sc .scv { font-family: var(--f-d); font-size: 2.3rem; color: var(--text-1); line-height: 1; }
+.sc.hl .scv { color: var(--accent); }
+.sc .scl { font-family: var(--f-m); font-size: .69rem; color: var(--text-3); letter-spacing: .07em; text-transform: uppercase; margin-top: 8px; }
+.sc .scs { font-size: .74rem; color: var(--text-3); margin-top: 3px; }
+
+.tile-wrap { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r); overflow-x: auto; box-shadow: var(--shadow); margin-bottom: 22px; }
+.tile-tbl { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.tile-tbl th { padding: 9px 13px; text-align: left; font-size: .7rem; letter-spacing: .05em; text-transform: uppercase; color: var(--text-3); background: var(--bg-alt); border-bottom: 1.5px solid var(--border); font-weight: 600; }
+.tile-tbl td { padding: 10px 13px; border-bottom: 1px solid var(--border-subtle); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.tile-tbl td:first-child { font-family: var(--f-m); font-size: .79rem; color: var(--text-1); }
+.tile-tbl tr:last-child td { border-bottom: none; }
+.tile-best { color: var(--accent) !important; font-weight: 600; }
+.tile-lo { color: var(--cls-sev) !important; }
+
+.oracle {
+  background: linear-gradient(135deg,rgba(26,107,60,.07),rgba(26,107,60,.03));
+  border: 1px solid rgba(26,107,60,.22); border-radius: var(--r); padding: 20px 22px;
+}
+.oc-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--accent-faint); border-radius: 4px; padding: 3px 10px;
+  font-family: var(--f-m); font-size: .69rem; color: var(--accent);
+  letter-spacing: .06em; text-transform: uppercase; margin-bottom: 9px;
+}
+.oracle p { font-size: .87rem; color: var(--text-2); line-height: 1.65; }
+.oracle strong { color: var(--text-1); }
+
+.ov-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin: 30px 0 14px; }
+.ov-head h3 { font-family: var(--f-d); font-weight: 400; font-size: 1.35rem; color: var(--text-1); }
+.ov-note { font-size: .78rem; color: var(--text-3); }
+.overlay-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(380px,100%),1fr)); gap: 20px; margin-bottom: 22px; }
+.ov-fig {
+  margin: 0; background: var(--surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--r); box-shadow: var(--shadow); overflow: hidden;
+}
+.ov-fig img {
+  display: block; width: 100%; max-width: 100%; height: auto;
+  background: var(--surface-2); cursor: zoom-in;
+}
+.ov-fig figcaption { padding: 11px 14px 13px; border-top: 1px solid var(--border-subtle); }
+.ov-cap-t { font-family: var(--f-m); font-size: .78rem; color: var(--text-1); }
+.ov-cap-m { font-size: .74rem; color: var(--text-3); margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+.lb {
+  position: fixed; inset: 0; z-index: 400; display: none;
+  align-items: center; justify-content: center; padding: 26px 20px 52px;
+  background: var(--lb-scrim); cursor: zoom-out;
+}
+.lb.on { display: flex; }
+.lb img { max-width: 100%; max-height: 84vh; border-radius: var(--r); box-shadow: var(--shadow-md); }
+.lb-cap {
+  position: absolute; left: 0; right: 0; bottom: 18px; padding: 0 22px; text-align: center;
+  font-family: var(--f-m); font-size: .75rem; color: var(--lb-fg);
+}
+.lb-x {
+  position: absolute; top: 14px; right: 16px; width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--lb-scrim); border: 1px solid var(--lb-fg); border-radius: 50%;
+  font-size: 1.5rem; line-height: 1; color: var(--lb-fg); cursor: pointer; padding: 0;
+}
+.lb-x:hover { color: var(--surface); }
+body.lb-open .theme-btn, body.lb-open .prog-nav { opacity: 0; pointer-events: none; }
+
+/* ===== ARTEFAK WEB ===== */
+#s7 { background: #0b1622; color: #d4e2f0; }
+#s7 .s-label { color: #27ae60; }
+#s7 .s-title { color: #e5f1fb; }
+#s7 .s-lead { color: rgba(212,226,240,.68); }
+
+.fnd-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(235px,1fr)); gap: 14px; margin-bottom: 34px; }
+.fnd {
+  background: rgba(255,255,255,.035); border: 1px solid rgba(212,226,240,.09);
+  border-radius: var(--r); padding: 18px;
+}
+.fnd-num { font-family: var(--f-m); font-size: .69rem; color: #27ae60; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 7px; }
+.fnd-title { font-weight: 600; font-size: .88rem; color: #e5f1fb; margin-bottom: 7px; line-height: 1.3; }
+.fnd-body { font-size: .79rem; color: rgba(212,226,240,.58); line-height: 1.54; }
+.fnd-body .hi { color: #27ae60; font-weight: 500; }
+.fnd-body .warn { color: #e67e22; }
+
+.val-lbl { font-family: var(--f-m); font-size: .7rem; color: rgba(212,226,240,.38); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 10px; }
+.val-tbl { width: 100%; border-collapse: collapse; font-size: .82rem; margin-bottom: 34px; }
+.val-tbl th { padding: 9px 13px; text-align: left; font-size: .7rem; letter-spacing: .05em; text-transform: uppercase; color: rgba(212,226,240,.38); border-bottom: 1px solid rgba(212,226,240,.1); font-weight: 600; }
+.val-tbl td { padding: 10px 13px; border-bottom: 1px solid rgba(212,226,240,.07); color: rgba(212,226,240,.62); font-variant-numeric: tabular-nums; }
+.val-tbl td:first-child { color: rgba(212,226,240,.88); }
+.val-tbl tr:last-child td { border-bottom: none; }
+.vf { color: #27ae60 !important; font-weight: 500; }
+.vp { color: #e67e22 !important; }
+.vl { color: #c0392b !important; }
+
+.hf-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 13px 26px; background: #27ae60; color: #fff;
+  border-radius: var(--r); font-weight: 600; font-size: .9rem;
+  text-decoration: none; transition: all .2s; margin-top: 6px;
+  border: none; cursor: pointer;
+}
+.hf-btn:hover { background: #219150; transform: translateY(-2px); box-shadow: 0 6px 22px rgba(39,174,96,.38); }
+.hf-note { margin-top: 11px; font-size: .73rem; color: rgba(212,226,240,.32); font-family: var(--f-m); }
+
+/* ===== KESIMPULAN ===== */
+#s8 { background: var(--bg); }
+.conc-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 18px; margin-bottom: 44px; }
+.conc {
+  background: var(--surface); border: 1px solid var(--border-subtle);
+  border-top: 3px solid var(--accent); border-radius: var(--r);
+  padding: 22px 18px; box-shadow: var(--shadow);
+}
+.conc .ct { font-family: var(--f-m); font-size: .69rem; color: var(--text-3); letter-spacing: .07em; text-transform: uppercase; margin-bottom: 9px; }
+.conc .ch { font-weight: 600; font-size: .92rem; color: var(--text-1); margin-bottom: 9px; }
+.conc .cb { font-size: .82rem; color: var(--text-2); line-height: 1.54; }
+.badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.badge { font-family: var(--f-m); font-size: .7rem; background: var(--accent-faint); color: var(--accent); padding: 3px 9px; border-radius: 4px; font-weight: 500; }
+
+.footer {
+  border-top: 1px solid var(--border-subtle); margin-top: 56px; padding-top: 26px;
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
+}
+.f-author { font-size: .83rem; color: var(--text-3); line-height: 1.5; }
+.f-author strong { color: var(--text-2); }
+.f-links { display: flex; gap: 18px; }
+.f-links a { font-size: .81rem; color: var(--text-3); text-decoration: none; transition: color .2s; }
+.f-links a:hover { color: var(--accent); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 620px) {
+  .prog-nav { display: none; }
+  .sc-grid { grid-template-columns: repeat(2,1fr); }
+  .overlay-grid { grid-template-columns: 1fr; }
+  .ov-head { margin-top: 24px; }
+  .h-tags { gap: 6px; }
+  .pct-hd, .pct-row { grid-template-columns: 1fr repeat(2,auto); }
+  .pct-hd :nth-child(3), .pct-row :nth-child(3) { display: none; }
+}
+</style>
+
+<!-- Fixed UI -->
+<button class="theme-btn" id="tbtn" title="Ganti tema">🌓</button>
+<nav class="prog-nav" id="pnav"></nav>
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Pratinjau overlay tile">
+  <button class="lb-x" id="lbx" aria-label="Tutup pratinjau">&times;</button>
+  <img alt="">
+  <div class="lb-cap"></div>
+</div>
+
+<!-- S0 HERO -->
+<section id="s0">
+  <canvas id="hc"></canvas>
+  <div class="h-inner">
+    <div class="h-kicker rv">Studi Kasus · Tsunami Palu 2018</div>
+    <h1 class="h-title rv d1">Penilaian Kerusakan<br><em>Lahan Pertanian</em><br>Terdampak Bencana</h1>
+    <p class="h-sub rv d2">Menggunakan citra satelit resolusi sangat tinggi berbasis deep learning dan machine learning — dari segmentasi poligon lahan hingga klasifikasi kerusakan end-to-end.</p>
+    <div class="h-tags rv d3">
+      <span class="h-tag">Mask R-CNN · Segmentasi Instance</span>
+      <span class="h-tag">Random Forest · Klasifikasi Kerusakan</span>
+      <span class="h-tag">18 Tile · 3.271 Poligon</span>
+      <span class="h-tag">xView2 Score = 0,3103</span>
+    </div>
+    <div class="h-scroll rv d4"><span class="h-scroll-line"></span>gulir untuk menjelajahi</div>
+  </div>
+</section>
+
+<!-- S1 MASALAH -->
+<section id="s1">
+  <div class="inner">
+    <p class="s-label rv">01 · Konteks Masalah</p>
+    <h2 class="s-title rv d1">Bencana, Lahan, dan Kebutuhan Penilaian Cepat</h2>
+    <p class="s-lead rv d2">Tsunami Palu 28 September 2018 (M 7,5) berdampak luas pada lahan pertanian di sekitar Teluk Palu. Penilaian kerusakan manual lambat dan berisiko — citra satelit VHR membuka peluang otomatisasi berbasis deep learning dan machine learning.</p>
+    <div class="stat-row rv d3">
+      <div class="stat-tile"><div class="num">VHR</div><div class="lbl">Citra resolusi sangat tinggi ±0,5 m/piksel</div></div>
+      <div class="stat-tile"><div class="num">3</div><div class="lbl">Kelas kondisi lahan yang dinilai</div></div>
+      <div class="stat-tile"><div class="num">2+2</div><div class="lbl">Model DL + ML yang dibandingkan</div></div>
+      <div class="stat-tile"><div class="num">E2E</div><div class="lbl">Pipeline integrasi end-to-end</div></div>
+    </div>
+    <p class="rv d3" style="font-size:.87rem;color:var(--text-2);margin-bottom:14px;">Tiga kelas penilaian kerusakan lahan pertanian:</p>
+    <div class="chips rv d4">
+      <span class="chip cn"><span class="chip-dot" style="background:var(--cls-none)"></span>Tidak Terdampak</span>
+      <span class="chip cm"><span class="chip-dot" style="background:var(--cls-mid)"></span>Terdampak Sedang</span>
+      <span class="chip cs"><span class="chip-dot" style="background:var(--cls-sev)"></span>Terdampak Berat</span>
+    </div>
+  </div>
+</section>
+
+<!-- S2 DATA -->
+<section id="s2">
+  <div class="inner">
+    <p class="s-label rv">02 · Dataset</p>
+    <h2 class="s-title rv d1">18 Tile, 3.271 Poligon, Dua Waktu</h2>
+    <p class="s-lead rv d2">Dataset mencakup 18 tile citra (36 GeoTIFF — pre &amp; post-disaster) dengan anotasi poligon lahan pertanian berikut label kerusakan hasil digitasi manual.</p>
+    <div class="data-grid rv d3">
+      <div>
+        <div class="data-nums">
+          <div class="dn-item"><span class="big">18</span><span class="desc">Tile citra (36 file GeoTIFF: pre + post-disaster)</span></div>
+          <div class="dn-item"><span class="big">3.271</span><span class="desc">Poligon lahan berlabel (27 dibuang karena geometri NULL dari 3.298 mentah)</span></div>
+          <div class="dn-item"><span class="big">~1.028×1.022 px</span><span class="desc">Ukuran tile, CRS EPSG:32751, ±0,5 m/piksel</span></div>
+        </div>
+        <div class="split-card rv d1">
+          <div class="split-row"><span class="sl">Test set — level tile (4 tile)</span><span class="sv">22,2%</span></div>
+          <div class="split-row"><span class="sl">Train CV — 14 tile, 4-fold LPT</span><span class="sv">77,8%</span></div>
+          <div class="split-row"><span class="sl">Test set — level poligon (604)</span><span class="sv">18,5%</span></div>
+          <div class="split-row"><span class="sl">Val (491 poligon)</span><span class="sv">15,0%</span></div>
+          <div class="split-row"><span class="sl">Train (2.176 poligon)</span><span class="sv">66,5%</span></div>
+        </div>
+      </div>
+      <div class="chart-card rv d2">
+        <div class="chart-hd">Distribusi Kelas Kerusakan (3.271 poligon)</div>
+        <canvas id="chart-dist" height="230"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- S3 PIPELINE -->
+<section id="s3">
+  <div class="inner">
+    <p class="s-label rv">03 · Metodologi</p>
+    <h2 class="s-title rv d1">Pipeline End-to-End</h2>
+    <p class="s-lead rv d2">Tiga tujuan penelitian dirangkai menjadi satu pipeline terpadu: deteksi poligon lahan → ekstraksi fitur perubahan 6 layer → klasifikasi kerusakan, lalu dikemas sebagai aplikasi web live.</p>
+    <div class="pipe rv d3">
+      <div class="p-step">
+        <div class="p-col"><div class="p-node pn1">T1</div><div class="p-line"></div></div>
+        <div class="p-body">
+          <div class="p-name">Segmentasi Instance Lahan Pertanian (Tujuan 1)</div>
+          <div class="p-desc">Citra PRE-disaster → Mask R-CNN (Detectron2, R50-FPN) → Poligon lahan pertanian<br>Dibandingkan dengan: YOLOv8-seg</div>
+        </div>
+      </div>
+      <div class="p-step">
+        <div class="p-col"><div class="p-node pn2">T2</div><div class="p-line"></div></div>
+        <div class="p-body">
+          <div class="p-name">Ekstraksi Fitur &amp; Klasifikasi Kerusakan (Tujuan 2)</div>
+          <div class="p-desc">Pasangan PRE &amp; POST → 6 layer fitur kontinu per poligon → Random Forest / LightGBM → 3 kelas kerusakan</div>
+        </div>
+      </div>
+      <div class="p-step">
+        <div class="p-col"><div class="p-node pn3">T3</div><div class="p-line"></div></div>
+        <div class="p-body">
+          <div class="p-name">Integrasi End-to-End (Tujuan 3)</div>
+          <div class="p-desc">Mask R-CNN → fitur per poligon terdeteksi → Random Forest → Penilaian end-to-end<br>Evaluasi: formula skor gabungan xView2 (Gupta dkk., 2019)</div>
+        </div>
+      </div>
+      <div class="p-step">
+        <div class="p-col"><div class="p-node pn4">WEB</div></div>
+        <div class="p-body">
+          <div class="p-name">Artefak Web — Aplikasi Inferensi Live</div>
+          <div class="p-desc">Gradio + Hugging Face Spaces ZeroGPU — pipeline Tujuan 3 secara interaktif tanpa pelatihan ulang</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="rv" style="font-size:.92rem;font-weight:600;color:var(--text-1);margin-bottom:14px;">6 Layer Fitur Perubahan (Tujuan 2)</h3>
+    <div class="feat-grid rv d1">
+      <div class="feat-card"><div class="fc-num">Layer 1</div><div class="fc-name">Batas Lahan</div><div class="fc-desc">Canny edge — degradasi batas fisik lahan (pagar, pematang)</div></div>
+      <div class="feat-card"><div class="fc-num">Layer 2</div><div class="fc-name">Material Asing</div><div class="fc-desc">CVA + HSV — deposit tsunami: lumpur, sedimen, puing</div></div>
+      <div class="feat-card"><div class="fc-num">Layer 3</div><div class="fc-name">Kehilangan Tanaman</div><div class="fc-desc">ExG (Excess Green) — perubahan vegetasi hijau pre vs post</div></div>
+      <div class="feat-card"><div class="fc-num">Layer 4</div><div class="fc-name">Radiometri</div><div class="fc-desc">CVA + Otsu — perubahan piksel radiometrik (tutupan permukaan)</div></div>
+      <div class="feat-card"><div class="fc-num">Layer 5</div><div class="fc-name">Genangan Air</div><div class="fc-desc">Water Index RGB — deteksi air/genangan sisa tsunami</div></div>
+      <div class="feat-card"><div class="fc-num">Layer 6</div><div class="fc-name">SAM AnyChange</div><div class="fc-desc">SAC — deteksi perubahan bitemporal semantik berbasis SAM</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- S4 TUJUAN 1 -->
+<section id="s4">
+  <div class="inner">
+    <p class="s-label rv">04 · Tujuan 1</p>
+    <h2 class="s-title rv d1">Segmentasi Instance Lahan Pertanian</h2>
+    <p class="s-lead rv d2">Dua model diuji pada test set 4 tile held-out. Mask R-CNN unggul di 6 dari 8 metrik, terutama pada instance precision yang selisihnya substansial.</p>
+    <div class="chart-box rv d3">
+      <div class="chart-hd">Perbandingan Metrik Instance-Level (Test Set)</div>
+      <canvas id="chart-t1" height="230"></canvas>
+    </div>
+    <div class="rv d3">
+      <table class="tbl">
+        <thead><tr><th>Metrik</th><th>YOLOv8-seg</th><th>Mask R-CNN</th><th>Selisih</th></tr></thead>
+        <tbody>
+          <tr><td>Instance Precision</td><td>0,6092</td><td class="win">0,8131</td><td class="win">+0,204</td></tr>
+          <tr><td>Instance Recall</td><td>0,5943</td><td>0,5813</td><td class="neu">−0,013</td></tr>
+          <tr><td>Instance F1</td><td>0,5973</td><td class="win">0,6589</td><td class="win">+0,062</td></tr>
+          <tr><td>Instance IoU</td><td>0,7492</td><td class="win">0,8421</td><td class="win">+0,093</td></tr>
+          <tr><td>Pixel Precision</td><td>0,7643</td><td class="win">0,8737</td><td class="win">+0,110</td></tr>
+          <tr><td>Pixel Recall</td><td class="win">0,6748</td><td>0,6467</td><td class="neu">−0,028</td></tr>
+          <tr><td>Pixel F1</td><td>0,6963</td><td class="win">0,7178</td><td class="win">+0,022</td></tr>
+          <tr><td>Pixel IoU</td><td>0,5399</td><td class="win">0,5702</td><td class="win">+0,030</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="verdict rv d4">
+      <div class="v-lbl">Model Terpilih · Mask R-CNN</div>
+      Keunggulan konsisten pada metrik instance-level (F1 = 0,6589 vs 0,5973) didorong oleh precision jauh lebih tinggi (0,8131 vs 0,6092), sementara selisih recall antar kedua model tidak signifikan (0,013). Stabilitas Mask R-CNN across-fold turut menjadi pertimbangan.
+    </div>
+    <div class="cv-box rv d5">
+      <div class="cv-t">Stabilitas Cross-Validation (4-fold)</div>
+      <ul>
+        <li>Mask R-CNN: AP naik monoton di semua fold (10,8 → 18,4 → 30,4 → 32,9) — tidak ada fold kolaps.</li>
+        <li>YOLOv8-seg: fold 3 kolaps (val_mAP50_mask ≈ 0,0001); fold 0–2 normal (0,25–0,53).</li>
+        <li>Tile 00000184 (n_gt = 243 poligon) paling sulit untuk kedua model — tile terpadat di test set.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- S5 TUJUAN 2 -->
+<section id="s5">
+  <div class="inner">
+    <p class="s-label rv">05 · Tujuan 2</p>
+    <h2 class="s-title rv d1">Klasifikasi Kerusakan Lahan</h2>
+    <p class="s-lead rv d2">Random Forest dan LightGBM dibandingkan pada 604 poligon test. Cohen's Kappa berbobot kuadratik dipilih sebagai metrik utama karena kelas bersifat ordinal dan distribusi tidak seimbang.</p>
+    <div class="chart-box rv d3">
+      <div class="chart-hd">Perbandingan Metrik Keseluruhan (Test Set, 604 poligon)</div>
+      <canvas id="chart-t2" height="230"></canvas>
+    </div>
+    <div class="pct rv d3">
+      <div class="pct-hd"><span>Kelas (Random Forest)</span><span>P</span><span>R</span><span>F1</span></div>
+      <div class="pct-row">
+        <span class="cn-name"><span class="c-dot" style="background:var(--cls-none)"></span>Tidak Terdampak</span>
+        <span class="mn">0,9026</span><span class="mn">0,4542</span><span class="mn">0,6043</span>
+      </div>
+      <div class="pct-row">
+        <span class="cn-name"><span class="c-dot" style="background:var(--cls-mid)"></span>Terdampak Sedang</span>
+        <span class="mn mn-lo">0,0375</span><span class="mn">0,1000</span><span class="mn mn-lo">0,0545</span>
+      </div>
+      <div class="pct-row">
+        <span class="cn-name"><span class="c-dot" style="background:var(--cls-sev)"></span>Terdampak Berat</span>
+        <span class="mn">0,7000</span><span class="mn">0,9664</span><span class="mn win">0,8119</span>
+      </div>
+    </div>
+    <div class="fi-wrap rv d4">
+      <div class="fi-hd">Urutan Kepentingan Fitur — Random Forest (ordinal Gini importance)</div>
+      <div class="fi-row"><span class="fi-rank">#1</span><span class="fi-lbl">Batas Lahan</span><div class="fi-bw"><div class="fi-b" data-w="100"></div></div></div>
+      <div class="fi-row"><span class="fi-rank">#2</span><span class="fi-lbl">Radiometri</span><div class="fi-bw"><div class="fi-b" data-w="72"></div></div></div>
+      <div class="fi-row"><span class="fi-rank">#3</span><span class="fi-lbl">Material Asing</span><div class="fi-bw"><div class="fi-b" data-w="56"></div></div></div>
+      <div class="fi-row"><span class="fi-rank">#4</span><span class="fi-lbl">SAM AnyChange</span><div class="fi-bw"><div class="fi-b" data-w="41"></div></div></div>
+      <div class="fi-row"><span class="fi-rank">#5</span><span class="fi-lbl">Kehilangan Tanaman</span><div class="fi-bw"><div class="fi-b" data-w="28"></div></div></div>
+      <div class="fi-row"><span class="fi-rank">#6</span><span class="fi-lbl">Genangan Air</span><div class="fi-bw"><div class="fi-b" data-w="17"></div></div></div>
+      <p class="fi-note">Urutan ordinal berdasarkan Gini importance — nilai eksak tidak ditampilkan. Layer #1 (Batas Lahan) dikonfirmasi sebagai tertinggi dari analisis. Kelas Terdampak Sedang kolaps (F1 = 0,0545) — akar penyebab: label shift train–test × class_weight='balanced_subsample', dikonfirmasi via skenario oracle Tujuan 3.</p>
+    </div>
+  </div>
+</section>
+
+<!-- S6 TUJUAN 3 -->
+<section id="s6">
+  <div class="inner">
+    <p class="s-label rv">06 · Tujuan 3</p>
+    <h2 class="s-title rv d1">Pipeline End-to-End &amp; Evaluasi</h2>
+    <p class="s-lead rv d2">Mask R-CNN (Tujuan 1) + Random Forest (Tujuan 2) dijalankan terintegrasi pada 4 tile test. Recall lokalisasi membaik dari 0,58 (standalone) menjadi 0,66 setelah DETECTIONS_PER_IMAGE dinaikkan ke 500.</p>
+    <div class="sc-grid rv d3">
+      <div class="sc hl"><div class="scv">0,7062</div><div class="scl">F1 Lokalisasi</div><div class="scs">P=0,7586 · R=0,6606</div></div>
+      <div class="sc"><div class="scv">0,1406</div><div class="scl">F1 Damage</div><div class="scs">harmonic mean 3 kelas</div></div>
+      <div class="sc hl"><div class="scv">0,3103</div><div class="scl">Skor Gabungan xView2</div><div class="scs">0,3×F1_lok + 0,7×HM</div></div>
+      <div class="sc"><div class="scv">0,4005</div><div class="scl">mIoU (4 kelas)</div><div class="scs">pixel-level · micro · bg ikut</div></div>
+    </div>
+    <div class="tile-wrap rv d4">
+      <table class="tile-tbl">
+        <thead><tr><th>Tile</th><th>GT Pol.</th><th>Pred.</th><th>Matched</th><th>F1 Lok.</th><th>Akurasi Kls.</th></tr></thead>
+        <tbody>
+          <tr><td>00000163</td><td>113</td><td>107</td><td>66</td><td>0,6316</td><td class="tile-lo">0,5373</td></tr>
+          <tr><td>00000169</td><td>155</td><td>127</td><td>101</td><td>0,7247</td><td>0,7525</td></tr>
+          <tr><td>00000184</td><td>243</td><td>180</td><td>146</td><td>0,6667</td><td>0,6986</td></tr>
+          <tr><td>00000195</td><td>93</td><td>112</td><td>86</td><td class="tile-best">0,8095</td><td class="tile-best">0,8605</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="ov-head rv d5">
+      <h3>Overlay Prediksi per Tile</h3>
+      <span class="ov-note">Tiga panel: ground truth · prediksi model · peta kesalahan. Klik untuk memperbesar.</span>
+    </div>
+    <div class="overlay-grid rv d5">
+      <figure class="ov-fig">
+        <picture>
+          <source srcset="img/overlay_163.webp" type="image/webp">
+          <img src="img/overlay_163.jpg" width="1800" height="674" loading="lazy" decoding="async"
+               alt="Tile 00000163 dalam tiga panel: ground truth, prediksi Mask R-CNN + Random Forest, dan peta kesalahan model terhadap ground truth">
+        </picture>
+        <figcaption>
+          <div class="ov-cap-t">Tile 00000163</div>
+          <div class="ov-cap-m">113 poligon GT · F1 lokalisasi 0,6316 · akurasi klasifikasi 0,5373</div>
+        </figcaption>
+      </figure>
+      <figure class="ov-fig">
+        <picture>
+          <source srcset="img/overlay_169.webp" type="image/webp">
+          <img src="img/overlay_169.jpg" width="1800" height="674" loading="lazy" decoding="async"
+               alt="Tile 00000169 dalam tiga panel: ground truth, prediksi Mask R-CNN + Random Forest, dan peta kesalahan model terhadap ground truth">
+        </picture>
+        <figcaption>
+          <div class="ov-cap-t">Tile 00000169</div>
+          <div class="ov-cap-m">155 poligon GT · F1 lokalisasi 0,7247 · akurasi klasifikasi 0,7525</div>
+        </figcaption>
+      </figure>
+      <figure class="ov-fig">
+        <picture>
+          <source srcset="img/overlay_184.webp" type="image/webp">
+          <img src="img/overlay_184.jpg" width="1800" height="674" loading="lazy" decoding="async"
+               alt="Tile 00000184 dalam tiga panel: ground truth, prediksi Mask R-CNN + Random Forest, dan peta kesalahan model terhadap ground truth">
+        </picture>
+        <figcaption>
+          <div class="ov-cap-t">Tile 00000184</div>
+          <div class="ov-cap-m">243 poligon GT · F1 lokalisasi 0,6667 · akurasi klasifikasi 0,6986</div>
+        </figcaption>
+      </figure>
+      <figure class="ov-fig">
+        <picture>
+          <source srcset="img/overlay_195.webp" type="image/webp">
+          <img src="img/overlay_195.jpg" width="1800" height="674" loading="lazy" decoding="async"
+               alt="Tile 00000195 dalam tiga panel: ground truth, prediksi Mask R-CNN + Random Forest, dan peta kesalahan model terhadap ground truth">
+        </picture>
+        <figcaption>
+          <div class="ov-cap-t">Tile 00000195</div>
+          <div class="ov-cap-m">93 poligon GT · F1 lokalisasi 0,8095 · akurasi klasifikasi 0,8605</div>
+        </figcaption>
+      </figure>
+    </div>
+    <div class="oracle rv d5">
+      <div class="oc-badge">🔬 Eksperimen Oracle Terkontrol</div>
+      <p>Kontribusi ketidaksempurnaan geometri deteksi Mask R-CNN terhadap penurunan performa klasifikasi <strong>terukur kecil namun konsisten (~0,018 macro-F1)</strong> dari skenario oracle terkontrol (n=399 poligon matched identik). Mayoritas keterbatasan tetap berasal dari label shift dan kolaps kelas Terdampak Sedang yang sudah teridentifikasi di Tujuan 2 — bukan dari kualitas geometri deteksi.</p>
+    </div>
+  </div>
+</section>
+
+<!-- S7 ARTEFAK WEB -->
+<section id="s7">
+  <div class="inner">
+    <p class="s-label rv">07 · Artefak Web</p>
+    <h2 class="s-title rv d1">Aplikasi Web Inferensi Live</h2>
+    <p class="s-lead rv d2">Pipeline Tujuan 3 dikemas sebagai aplikasi Gradio dan di-deploy ke Hugging Face Spaces ZeroGPU — inferensi end-to-end interaktif, tanpa pelatihan ulang, ~22 detik per pasang citra.</p>
+    <div class="fnd-grid rv d3">
+      <div class="fnd">
+        <div class="fnd-num">Temuan 1</div>
+        <div class="fnd-title">Portabilitas Ruang Piksel Terbukti</div>
+        <div class="fnd-body">6 layer fitur murni operasi numpy/cv2 pada nilai piksel. Divalidasi 115 poligon — ruang piksel vs geografis <span class="hi">identik bit-per-bit</span> (max|beda| = 0,0000). CRS hanya label kontainer GeoDataFrame.</div>
+      </div>
+      <div class="fnd">
+        <div class="fnd-num">Temuan 2</div>
+        <div class="fnd-title">Dua Preprocessing Berbeda, Satu Pipeline</div>
+        <div class="fnd-body">Deteksi: min-max <em>gabungan</em> 3 band (replikasi training Tujuan 1). Fitur: percentile 2–98 <em>per band</em>. Keduanya <span class="hi">sengaja berbeda</span> — bukan bug, wajib dipertahankan.</div>
+      </div>
+      <div class="fnd">
+        <div class="fnd-num">Temuan 3</div>
+        <div class="fnd-title">Cara Konversi 8-bit Tentukan Recall</div>
+        <div class="fnd-body">Min-max gabungan: <span class="hi">96,8%</span> lahan terdeteksi. Percentile per band: <span class="warn">40,3%</span>. Model dilatih pada min-max — stretch per band merusak keseimbangan warna antar band yang dipelajari model.</div>
+      </div>
+      <div class="fnd">
+        <div class="fnd-num">Temuan 4</div>
+        <div class="fnd-title">TF32 Menggeser Hasil Lintas Generasi GPU</div>
+        <div class="fnd-body">GPU Ampere+ (ZeroGPU) pakai TF32 secara default; T4 tidak. Solusi: matikan TF32 eksplisit → <span class="hi">hasil kembali identik</span>. Implikasi: klaim reproduksibilitas DL perlu menyebut presisi aritmetik.</div>
+      </div>
+    </div>
+    <p class="val-lbl rv">Validasi Regresi · 4 Tile Test · acuan: tujuan3_bundle/poligon_prediksi_4tile.gpkg</p>
+    <table class="val-tbl rv d1">
+      <thead><tr><th>Jalur Input</th><th>Terdeteksi</th><th>Kelas Benar</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>GeoTIFF float32 (32-bit)</td><td>526/526 (100%)</td><td>526/526 (100%)</td><td class="vf">✓ Identik</td></tr>
+        <tr><td>PNG 8-bit (min-max gabungan)</td><td>509/526 (96,8%)</td><td>469/526 (89,2%)</td><td class="vp">~ Mendekati</td></tr>
+        <tr><td>PNG 8-bit (percentile per band)</td><td>212/526 (40,3%)</td><td>199/526 (37,8%)</td><td class="vl">✗ Tidak Disarankan</td></tr>
+      </tbody>
+    </table>
+    <div class="rv d2">
+      <a href="https://huggingface.co/spaces/ZaXira/penilaian-kerusakan-lahan" target="_blank" class="hf-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+        Buka di Hugging Face Spaces
+      </a>
+      <p class="hf-note">ZaXira/penilaian-kerusakan-lahan · Gradio · ZeroGPU · ~22 detik/pasang citra</p>
+    </div>
+  </div>
+</section>
+
+<!-- S8 KESIMPULAN -->
+<section id="s8">
+  <div class="inner">
+    <p class="s-label rv">08 · Kesimpulan</p>
+    <h2 class="s-title rv d1">Temuan Utama Penelitian</h2>
+    <p class="s-lead rv d2">Ketiga tujuan penelitian terjawab penuh dengan keterbatasan struktural yang terdokumentasi. Pipeline end-to-end berhasil divalidasi 100% identik dan di-deploy sebagai aplikasi web live.</p>
+    <div class="conc-grid rv d3">
+      <div class="conc">
+        <div class="ct">Tujuan 1</div>
+        <div class="ch">Segmentasi Instance</div>
+        <div class="cb">Mask R-CNN lebih unggul dari YOLOv8-seg — precision instance lebih tinggi substansial, recall serupa. ~34% lahan aktual tidak terdeteksi (keterbatasan struktural, membaik dari 42% via DETECTIONS_PER_IMAGE=500 di Tujuan 3).</div>
+        <div class="badges"><span class="badge">Instance F1 = 0,6589</span><span class="badge">Precision = 0,8131</span></div>
+      </div>
+      <div class="conc">
+        <div class="ct">Tujuan 2</div>
+        <div class="ch">Klasifikasi Kerusakan</div>
+        <div class="cb">Random Forest lebih baik dari LightGBM terutama pada Kappa. Kelas Terdampak Sedang kolaps akibat label shift, dikonfirmasi via oracle. Layer Batas Lahan menjadi fitur terpenting (Gini tertinggi).</div>
+        <div class="badges"><span class="badge">Kappa = 0,5556</span><span class="badge">F1-Macro = 0,4903</span></div>
+      </div>
+      <div class="conc">
+        <div class="ct">Tujuan 3 + Artefak</div>
+        <div class="ch">Pipeline End-to-End</div>
+        <div class="cb">Integrasi Mask R-CNN + Random Forest berhasil. Recall lokalisasi naik 0,58→0,66. Kontribusi geometri terhadap gap klasifikasi kecil (~0,018 macro-F1). Artefak web tervalidasi 100% identik pada jalur GeoTIFF.</div>
+        <div class="badges"><span class="badge">xView2 = 0,3103</span><span class="badge">F1_lok = 0,7062</span></div>
+      </div>
+    </div>
+    <div class="footer rv d4">
+      <div class="f-author">
+        <strong>Rafliansyah Tondau</strong><br>
+        D-IV Komputasi Statistik · Peminatan Sains Data<br>
+        Politeknik Statistika STIS · 2026
+      </div>
+      <div class="f-links">
+        <a href="https://huggingface.co/spaces/ZaXira/penilaian-kerusakan-lahan" target="_blank">Artefak Web</a>
+        <a href="https://huggingface.co/ZaXira" target="_blank">Hugging Face</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---- THEME ---- */
+  var root = document.documentElement;
+  try {
+    var saved = localStorage.getItem('ts-theme');
+    if (saved) root.setAttribute('data-theme', saved);
+  } catch(e) {}
+  document.getElementById('tbtn').addEventListener('click', function () {
+    var cur = root.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('ts-theme', next); } catch(e) {}
+  });
+
+  /* ---- HERO CANVAS ---- */
+  var c = document.getElementById('hc');
+  if (c) {
+    var ctx = c.getContext('2d');
+    var W = 1, H = 1;
+    var parcels = [];
+    var scanY = 0;
+    var C = [[39,174,96],[230,126,34],[192,57,43]]; // rgb for 3 classes
+
+    function buildParcels() {
+      var hero = c.parentElement;
+      W = c.width  = hero.clientWidth  || 800;
+      H = c.height = hero.clientHeight || 600;
+      parcels = [];
+      var cols = 20, rows = 11;
+      var pw = W / cols, ph = H / rows;
+      for (var r = 0; r < rows; r++) {
+        for (var col = 0; col < cols; col++) {
+          if (Math.random() < 0.58) {
+            var rnd = Math.random();
+            var ci = rnd < 0.24 ? 0 : rnd < 0.32 ? 1 : 2;
+            parcels.push({
+              x: col * pw + pw * 0.1,  y: r * ph + ph * 0.1,
+              w: pw * (.46 + Math.random() * .38), h: ph * (.42 + Math.random() * .4),
+              ci: ci, ph: Math.random() * 6.28, sp: .35 + Math.random() * .55
+            });
+          }
+        }
+      }
+    }
+
+    var last = 0;
+    function draw(ts) {
+      requestAnimationFrame(draw);
+      var dt = Math.min(ts - last, 50); last = ts;
+      var t = ts * 0.001;
+
+      ctx.fillStyle = '#0b1622';
+      ctx.fillRect(0, 0, W, H);
+
+      // grid
+      ctx.strokeStyle = 'rgba(100,160,200,.07)';
+      ctx.lineWidth = .6;
+      for (var gx = 0; gx < W; gx += 52) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
+      for (var gy = 0; gy < H; gy += 52) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
+
+      // parcels
+      for (var i = 0; i < parcels.length; i++) {
+        var p = parcels[i];
+        var a = 0.1 + 0.09 * Math.sin(t * p.sp + p.ph);
+        var rgb = C[p.ci];
+        ctx.fillStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + a + ')';
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.strokeStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',.28)';
+        ctx.lineWidth = .8;
+        ctx.strokeRect(p.x, p.y, p.w, p.h);
+      }
+
+      // scan line
+      scanY += dt * 0.048;
+      if (scanY > H + 20) scanY = -20;
+      var g = ctx.createLinearGradient(0, scanY - 10, 0, scanY + 10);
+      g.addColorStop(0,   'rgba(39,200,100,0)');
+      g.addColorStop(.5,  'rgba(39,200,100,.65)');
+      g.addColorStop(1,   'rgba(39,200,100,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, scanY - 10, W, 20);
+    }
+
+    var ro = new ResizeObserver(buildParcels);
+    ro.observe(document.getElementById('s0'));
+    buildParcels();
+    requestAnimationFrame(draw);
+  }
+
+  /* ---- PROGRESS NAV ---- */
+  var sids = ['s0','s1','s2','s3','s4','s5','s6','s7','s8'];
+  var pnav = document.getElementById('pnav');
+  sids.forEach(function(id, idx) {
+    var btn = document.createElement('button');
+    btn.title = 'Bagian ' + (idx + 1);
+    if (idx === 0) btn.className = 'on';
+    btn.addEventListener('click', function () {
+      var el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    });
+    pnav.appendChild(btn);
+  });
+  var pbtns = pnav.querySelectorAll('button');
+  var secIo = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        var idx = sids.indexOf(e.target.id);
+        pbtns.forEach(function(b, i) { b.className = i === idx ? 'on' : ''; });
+      }
+    });
+  }, { threshold: 0.35 });
+  sids.forEach(function(id) { var el = document.getElementById(id); if (el) secIo.observe(el); });
+
+  /* ---- SCROLL REVEAL ---- */
+  var rvEls = document.querySelectorAll('.rv');
+  var rvIo = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) { e.target.classList.add('in'); rvIo.unobserve(e.target); }
+    });
+  }, { threshold: 0.1 });
+  rvEls.forEach(function(el) { rvIo.observe(el); });
+  // hero immediate
+  document.querySelectorAll('#s0 .rv').forEach(function(el) { el.classList.add('in'); });
+
+  /* ---- FEATURE IMPORTANCE BARS ---- */
+  var fiWrap = document.querySelector('.fi-wrap');
+  if (fiWrap) {
+    var fiIo = new IntersectionObserver(function(entries) {
+      if (entries[0].isIntersecting) {
+        fiWrap.querySelectorAll('.fi-b').forEach(function(b) {
+          b.style.width = (b.dataset.w || 0) + '%';
+        });
+        fiIo.unobserve(fiWrap);
+      }
+    }, { threshold: 0.25 });
+    fiIo.observe(fiWrap);
+  }
+
+  /* ---- CHARTS ---- */
+  if (typeof Chart === 'undefined') return;
+
+  Chart.defaults.font.family = "'IBM Plex Sans', system-ui, sans-serif";
+
+  function tk() {
+    var s = getComputedStyle(root);
+    return {
+      t1: s.getPropertyValue('--text-1').trim() || '#0d1b2a',
+      t2: s.getPropertyValue('--text-2').trim() || '#3a5168',
+      t3: s.getPropertyValue('--text-3').trim() || '#7990a8',
+      bd: s.getPropertyValue('--border-subtle').trim() || '#dde8f0',
+      sf: s.getPropertyValue('--surface').trim() || '#ffffff'
+    };
+  }
+
+  var CA = '#1a6b3c'; // RF / Mask R-CNN
+  var CB = '#2e7db0'; // LightGBM / YOLOv8-seg
+
+  function baseOpts(t, yMin) {
+    return {
+      responsive: true, maintainAspectRatio: true,
+      plugins: {
+        legend: { labels: { color: t.t2, boxWidth: 11, padding: 14, font: { size: 11 } } },
+        tooltip: {
+          backgroundColor: t.sf, titleColor: t.t1, bodyColor: t.t2,
+          borderColor: t.bd, borderWidth: 1, padding: 9,
+          callbacks: { label: function(c) { return ' ' + c.dataset.label + ': ' + c.raw.toFixed(4); } }
+        }
+      },
+      scales: {
+        x: { ticks: { color: t.t3, font: { size: 11 } }, grid: { color: t.bd } },
+        y: {
+          min: yMin, max: 1,
+          ticks: { color: t.t3, font: { size: 11 }, callback: function(v) { return v.toFixed(2); } },
+          grid: { color: t.bd }
+        }
+      }
+    };
+  }
+
+  // Donut
+  var cdist = document.getElementById('chart-dist');
+  if (cdist) {
+    var t0 = tk();
+    new Chart(cdist, {
+      type: 'doughnut',
+      data: {
+        labels: ['Tidak Terdampak','Terdampak Sedang','Terdampak Berat'],
+        datasets: [{ data: [787, 292, 2192], backgroundColor: ['#27ae60','#e67e22','#c0392b'], borderColor: t0.sf, borderWidth: 3, hoverOffset: 5 }]
+      },
+      options: {
+        responsive: true, cutout: '62%',
+        plugins: {
+          legend: { position: 'bottom', labels: { color: t0.t2, boxWidth: 11, padding: 12, font: { size: 11 } } },
+          tooltip: {
+            backgroundColor: t0.sf, titleColor: t0.t1, bodyColor: t0.t2, borderColor: t0.bd, borderWidth: 1,
+            callbacks: { label: function(c) { return ' ' + c.label + ': ' + c.raw.toLocaleString('id-ID') + ' (' + ((c.raw/3271)*100).toFixed(1) + '%)'; } }
+          }
+        }
+      }
+    });
+  }
+
+  // T1 grouped bar
+  var ct1 = document.getElementById('chart-t1');
+  if (ct1) {
+    var t1 = tk(); var o1 = baseOpts(t1, 0.4);
+    new Chart(ct1, {
+      type: 'bar',
+      data: {
+        labels: ['Precision','Recall','F1','IoU'],
+        datasets: [
+          { label: 'YOLOv8-seg',  data: [0.6092,0.5943,0.5973,0.7492], backgroundColor: CB + 'cc', borderColor: CB, borderWidth: 1.5, borderRadius: 4 },
+          { label: 'Mask R-CNN', data: [0.8131,0.5813,0.6589,0.8421], backgroundColor: CA + 'cc', borderColor: CA, borderWidth: 1.5, borderRadius: 4 }
+        ]
+      },
+      options: o1
+    });
+  }
+
+  // T2 grouped bar
+  var ct2 = document.getElementById('chart-t2');
+  if (ct2) {
+    var t2 = tk(); var o2 = baseOpts(t2, 0.35);
+    new Chart(ct2, {
+      type: 'bar',
+      data: {
+        labels: ['Accuracy','F1-Macro','Prec-Macro','Rec-Macro','Kappa'],
+        datasets: [
+          { label: 'Random Forest', data: [0.6639,0.4903,0.5467,0.5069,0.5556], backgroundColor: CA + 'cc', borderColor: CA, borderWidth: 1.5, borderRadius: 4 },
+          { label: 'LightGBM',      data: [0.6507,0.4849,0.5228,0.5063,0.4566], backgroundColor: CB + 'cc', borderColor: CB, borderWidth: 1.5, borderRadius: 4 }
+        ]
+      },
+      options: o2
+    });
+  }
+
+  /* ---- OVERLAY LIGHTBOX ---- */
+  var lb = document.getElementById('lb');
+  if (lb) {
+    var lbImg = lb.querySelector('img');
+    var lbCap = lb.querySelector('.lb-cap');
+    var closeLb = function () {
+      lb.classList.remove('on');
+      document.body.classList.remove('lb-open');
+      document.body.style.overflow = '';
+      lbImg.removeAttribute('src');
+    };
+    var openLb = function (fig) {
+      var im = fig.querySelector('img');
+      lbImg.src = im.currentSrc || im.src;
+      lbImg.alt = im.alt;
+      lbCap.textContent = fig.querySelector('.ov-cap-t').textContent +
+                          ' — ' + fig.querySelector('.ov-cap-m').textContent;
+      lb.classList.add('on');
+      document.body.classList.add('lb-open');
+      document.body.style.overflow = 'hidden';
+    };
+    Array.prototype.forEach.call(document.querySelectorAll('.ov-fig img'), function (im) {
+      im.addEventListener('click', function () { openLb(im.closest('.ov-fig')); });
+    });
+    lb.addEventListener('click', closeLb);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && lb.classList.contains('on')) closeLb();
+    });
+  }
+})();
+</script>
+
+</body></html>

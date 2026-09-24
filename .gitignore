@@ -1,0 +1,13 @@
+# Aset sumber — terlalu besar untuk repo, tetap di lokal / Kaggle / HF
+Tujuan 3/
+*.zip
+*.tif
+*.gpkg
+*.pth
+*.joblib
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+_site/
