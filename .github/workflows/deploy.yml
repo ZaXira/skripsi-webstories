@@ -30,7 +30,7 @@ jobs:
       - name: Stage site (kecualikan aset sumber)
         run: |
           mkdir -p _site
-          rsync -a --exclude '_site/' --exclude '.git/' --exclude '.github/' --exclude 'Tujuan 3/' --exclude 'CLAUDE.md' --exclude '*.zip' ./ _site/
+          rsync -a --exclude '_site/' --exclude '.git/' --exclude '.github/' --exclude 'Tujuan 3/' --exclude 'CLAUDE.md' --exclude '*.txt' --exclude '*.zip' ./ _site/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

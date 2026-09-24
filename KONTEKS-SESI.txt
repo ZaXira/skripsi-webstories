@@ -1,0 +1,347 @@
+================================================================================
+KONTEKS PROYEK — THESIS WEB STORIES
+Dibuat: 25 September 2026 · Untuk dibaca Claude Code di sesi berikutnya
+================================================================================
+
+CARA PAKAI FILE INI
+-------------------
+Baca berurutan: CLAUDE.md  ->  file ini  ->  KODE-LENGKAP.txt (kalau perlu
+melihat isi kode tanpa membuka filenya satu per satu).
+
+CLAUDE.md tetap sumber aturan yang mengikat. File ini adalah catatan konteks
+dan keputusan yang TIDAK terbaca dari kode — alasan di balik pilihan, jebakan
+yang sudah ketemu, dan status hosting.
+
+
+================================================================================
+1. IDENTITAS PROYEK
+================================================================================
+
+Judul skripsi : "Penilaian Kerusakan Lahan Pertanian Terdampak Bencana
+                Menggunakan Citra Satelit Resolusi Sangat Tinggi Berbasis
+                Deep Learning dan Machine Learning: Studi Kasus Tsunami
+                Palu 2018"
+Penulis       : Rafliansyah Tondau
+Program       : D-IV Komputasi Statistik, Politeknik Statistika STIS, 2026
+Bentuk web    : Halaman scrollytelling SATU FILE (index.html).
+                Tanpa framework, tanpa build step, tanpa package.json.
+
+Repo GitHub   : https://github.com/ZaXira/skripsi-webstories
+Direktori lokal: C:\STIS\skirpsi-raja terakhir\Web Story
+
+
+================================================================================
+2. URL — PENTING, JANGAN TERTUKAR
+================================================================================
+
+  +----------------------------------------------+---------------------------+
+  | https://skripsi-webstories.vercel.app        | PRODUKSI — publik, 200.   |
+  |                                              | INI yang dibagikan ke     |
+  |                                              | dosen penguji / sidang /  |
+  |                                              | lampiran skripsi.         |
+  +----------------------------------------------+---------------------------+
+  | https://skripsi-webstories-<hash>-           | URL per-deployment.       |
+  |   rafliansyah.vercel.app                     | TERKUNCI Vercel SSO (302) |
+  +----------------------------------------------+---------------------------+
+  | https://skripsi-webstories-rafliansyah       | TERKUNCI Vercel SSO (302) |
+  |   .vercel.app                                |                           |
+  +----------------------------------------------+---------------------------+
+
+Vercel Deployment Protection aktif pada URL yang mengandung hash deployment
+maupun akhiran "-rafliansyah". Pengunjung tanpa akses akun Vercel akan
+dilempar ke halaman login SSO. Hanya domain produksi (tanpa sufiks) yang
+bebas diakses publik.
+
+Artefak web pipeline (terpisah, Gradio + HF Spaces ZeroGPU):
+https://huggingface.co/spaces/ZaXira/penilaian-kerusakan-lahan
+
+
+================================================================================
+3. HOSTING & DEPLOY
+================================================================================
+
+PRIMER — Vercel
+  Terhubung ke repo GitHub. Setiap push ke `main` memicu deploy otomatis.
+  Tidak ada build config; Vercel menyajikan index.html apa adanya (static).
+  vercel.json hanya mengatur cache header untuk /img/*.
+
+SEKUNDER — GitHub Pages (.github/workflows/deploy.yml)
+  Masih aktif sebagai jalur cadangan. Punya step "Stage site" yang rsync isi
+  repo ke _site/ sambil mengecualikan: Tujuan 3/, *.zip, *.txt, CLAUDE.md,
+  .github/. Aman dihapus kalau Vercel dianggap cukup.
+
+.vercelignore  -> mencegah *.txt (termasuk dua file konteks ini) ikut
+                  tersaji publik di domain Vercel.
+.gitignore     -> Tujuan 3/, *.zip, *.tif, *.gpkg, *.pth, *.joblib, _site/
+
+
+================================================================================
+4. ATURAN KERAS (ringkasan CLAUDE.md — jangan dilanggar)
+================================================================================
+
+4.1  JANGAN ubah angka hasil penelitian. Final & terverifikasi dari eksperimen
+     Kaggle. Berlaku untuk data array Chart.js, isi <td> tabel, maupun teks
+     kartu skor. Lihat daftar lengkap di bagian 8.
+
+4.2  JANGAN ubah tiga warna kelas kerusakan (dikonstantakan, boleh hex):
+       #27ae60  Tidak Terdampak     (token: --cls-none)
+       #e67e22  Terdampak Sedang    (token: --cls-mid)
+       #c0392b  Terdampak Berat     (token: --cls-sev)
+
+4.3  Chart.js DIKUNCI di 4.4.1 dari cdnjs. Font Google (DM Serif Display,
+     IBM Plex Sans, IBM Plex Mono) juga tidak diganti.
+
+4.4  Semua warna lain WAJIB var(--token). Token didefinisikan di :root,
+     dengan redefinisi dark mode via @media (prefers-color-scheme: dark)
+     dan [data-theme="dark"].
+
+4.5  Tidak menambah dependensi baru tanpa konfirmasi. Tidak ada React/Vue,
+     tidak ada Sass, tidak ada test suite.
+
+4.6  Nama model tidak diubah: Mask R-CNN, YOLOv8-seg, Random Forest, LightGBM.
+
+
+================================================================================
+5. STRUKTUR FILE
+================================================================================
+
+  Web Story/
+  |-- index.html                 <- SATU-SATUNYA file konten web
+  |-- README.md                  <- dokumentasi publik
+  |-- CLAUDE.md                  <- aturan mengikat untuk Claude Code
+  |-- KONTEKS-SESI.txt           <- file ini
+  |-- KODE-LENGKAP.txt           <- dump seluruh source
+  |-- vercel.json                <- cache header /img/*
+  |-- .gitignore
+  |-- .vercelignore
+  |-- img/                       <- ~2,1 MB total (sudah dioptimasi)
+  |   |-- overlay_163.webp / .jpg
+  |   |-- overlay_169.webp / .jpg
+  |   |-- overlay_184.webp / .jpg
+  |   +-- overlay_195.webp / .jpg
+  |-- Tujuan 3/                  <- SUMBER MENTAH, tidak di-commit & tidak di-deploy
+  |   |-- tujuan3_bundle.zip
+  |   |-- tujuan3_overlay/       <- PNG asli 3574x1339 (~3,5 MB/file)
+  |   +-- output/, __results___files/
+  +-- .github/workflows/deploy.yml
+
+
+================================================================================
+6. PETA index.html
+================================================================================
+
+SECTION (urutan dan id jangan diubah):
+  #s0  Hero — canvas animasi parsel + scan line, judul
+  #s1  Konteks masalah — stat tiles, class chips
+  #s2  Dataset — data-grid, chart donut distribusi kelas
+  #s3  Pipeline metodologi — flow diagram, 6 feat cards
+  #s4  Tujuan 1 segmentasi — chart bar, tabel metrik
+  #s5  Tujuan 2 klasifikasi — chart bar, per-class table, feature importance
+  #s6  Tujuan 3 end-to-end — score cards, tile table, GALERI OVERLAY, oracle
+  #s7  Artefak web — 4 finding cards, validation table, link HF
+  #s8  Kesimpulan — conc cards, footer
+
+KOMPONEN JS (satu IIFE di akhir file, urutan sesuai komentar /* ---- X ---- */):
+  1. THEME                      toggle dark/light, simpan ke localStorage
+  2. HERO CANVAS                animasi parsel berwarna + scan line
+  3. PROGRESS NAV               dots navigasi, IntersectionObserver per section
+  4. SCROLL REVEAL              .rv -> .in, PLUS rvSweep() + reposisi deep-link
+  5. FEATURE IMPORTANCE BARS    animasi bar saat section masuk viewport
+  6. CHARTS                     3x Chart.js: donut distribusi, bar T1, bar T2
+  7. OVERLAY LIGHTBOX           klik gambar overlay -> pratinjau layar penuh
+
+CATATAN STRUKTUR ANEH (pre-existing, bukan bug yang perlu diperbaiki):
+  Baris 1 index.html sudah berisi <head> lengkap + <style> pembungkus +
+  <body> terbuka, lalu <title> dan <link> font muncul SETELAH <body>.
+  Hasil ekspor dari tool lain. Browser menanganinya tanpa masalah.
+  Kalau perlu menyisipkan sesuatu ke <head>, sadari replace pertama pada
+  "</head>" akan mengenai penutup di baris 1 itu.
+
+
+================================================================================
+7. YANG DIKERJAKAN DI SESI 24-25 SEPT 2026 (beserta alasannya)
+================================================================================
+
+7.1  Rename "Penilaian Kerusakan Lahan.html" -> index.html
+     Alasan: GitHub Pages & Vercel butuh index.html sebagai entry point.
+
+7.2  deploy.yml dipindah dari root ke .github/workflows/
+
+7.3  Aset overlay Tujuan 3 dipasang
+     Nama file sumber TIDAK sama dengan yang tertulis di README lama.
+       Sebenarnya : Tujuan 3/tujuan3_overlay/tujuan3_3panel_00000163.png
+       README lama: overlay_00000163.png
+     Nomor tile (163, 169, 184, 195) dan format 3-panel cocok, jadi
+     diperlakukan sebagai file yang sama. Tile 164 TIDAK ADA di folder
+     sumber (README menandainya opsional).
+
+7.4  Optimasi gambar — keputusan penting
+     PNG asli 3574x1339 RGBA, ~3,5 MB/file, total ~13,6 MB. Terlalu berat.
+     Pipeline: flatten alpha ke putih -> resize lebar 1800 px (LANCZOS)
+               -> simpan .webp (q=86, method=6) DAN .jpg (q=82, optimize)
+     Hasil: total img/ turun dari ~13,6 MB menjadi ~2,1 MB.
+     Disajikan lewat <picture>: browser modern ambil .webp, sisanya .jpg.
+     .jpg sengaja dipertahankan sebagai jaring pengaman kalau halaman
+     dibuka di mesin asing saat sidang.
+     PNG resolusi penuh TETAP UTUH di Tujuan 3/tujuan3_overlay/.
+     Skrip regenerasi ada di README.md bagian "Menambah Aset Visual".
+
+7.5  Galeri overlay di #s6
+     Struktur .overlay-grid / .ov-fig persis pola yang ditentukan CLAUDE.md,
+     disisipkan SETELAH .tile-wrap dan SEBELUM .oracle.
+     Caption memakai angka yang SUDAH ADA di tabel tile (jumlah poligon GT,
+     F1 lokalisasi, akurasi klasifikasi) — sengaja tidak memperkenalkan
+     angka baru apa pun.
+     CATATAN: judul panel di dalam gambar memuat "n=" hasil prediksi yang
+     berbeda dari kolom "Pred." di tabel (mis. tile 163: gambar n=92,
+     tabel Pred.=107). Perhitungannya memang beda. JANGAN "diselaraskan".
+
+7.6  Lightbox overlay
+     Alasan: 3 panel pada lebar ~500 px tidak terbaca. Klik gambar ->
+     pratinjau besar. Tutup via klik, tombol x, atau Esc.
+     Sempat ada tabrakan z-index: .theme-btn (300) dan .prog-nav (200)
+     menutupi lightbox. Solusi: .lb dinaikkan ke z-index 400, plus class
+     body.lb-open yang menyembunyikan keduanya selama lightbox terbuka.
+     Token baru di :root: --lb-scrim, --lb-fg (sengaja theme-independent).
+
+7.7  Tujuan 3/ dikecualikan dari deploy — dua lapis
+     (a) .gitignore  -> tidak pernah masuk repo
+     (b) deploy.yml step "Stage site" -> tidak masuk artefak Pages
+     Ukuran folder itu ~49 MB, termasuk zip 14 MB.
+
+7.8  vercel.json
+     /img/* sebelumnya disajikan "max-age=0, must-revalidate" (default
+     Vercel) sehingga setiap kunjungan ulang menembak server lagi.
+     Sekarang "public, max-age=86400, stale-while-revalidate=604800".
+
+7.9  BUG DEEP-LINK — ditemukan dan diperbaiki (commit 0f48e4e)
+     Gejala : buka .../#s6 langsung -> mendarat di posisi salah, section
+              tampil KOSONG sampai user scroll manual.
+     Sebab  : font Google + canvas Chart.js menggeser layout SETELAH load,
+              jadi lompatan hash bawaan browser meleset; setelah itu
+              IntersectionObserver tidak pernah menyala untuk .rv di situ.
+     Perbaikan di komponen SCROLL REVEAL:
+       - rvSweep(): menandai .in pada semua .rv yang sudah di viewport,
+         dipanggil pada 'load' dan setTimeout 500 ms
+       - kalau ada location.hash: reposisi ulang pada 'load' (80 ms dan
+         600 ms), dengan scroll-behavior di-set 'auto' SEMENTARA lalu
+         dikembalikan
+     JEBAKAN yang ditemui saat memperbaiki:
+       html { scroll-behavior: smooth; } ada di CSS. Memanggil
+       scrollIntoView({behavior:'auto'}) TIDAK cukup — 'auto' berarti
+       "ikuti nilai CSS", jadi tetap smooth. Harus override properti
+       scroll-behavior elemen root, itulah sebabnya kodenya terlihat
+       berbelit.
+
+7.10 Keamanan — token GitHub
+     Remote origin dulu berbentuk https://ZaXira:ghp_...@github.com/...
+     dengan Personal Access Token plaintext di .git/config.
+     Sudah dibersihkan: remote kini https://github.com/ZaXira/skripsi-webstories.git
+     Token TIDAK pernah masuk commit mana pun (sudah disisir seluruh history).
+     TINDAKAN TERSISA UNTUK PENULIS: cabut token lama di
+     https://github.com/settings/tokens
+     Push berikutnya akan memunculkan Git Credential Manager sekali —
+     itu normal dan kredensialnya disimpan di Windows Credential Manager.
+
+
+================================================================================
+8. ANGKA PENELITIAN — REFERENSI, JANGAN DIUBAH
+================================================================================
+
+TUJUAN 1 (Test Set, 4 tile)
+  Metrik               YOLOv8-seg    Mask R-CNN
+  Instance Precision   0,6092        0,8131  <- terpilih
+  Instance Recall      0,5943        0,5813
+  Instance F1          0,5973        0,6589  <- terpilih
+  Instance IoU         0,7492        0,8421
+  Pixel F1             0,6963        0,7178
+
+TUJUAN 2 (Test Set, 604 poligon)
+  Metrik               Random Forest  LightGBM
+  Accuracy             0,6639         0,6507
+  F1-Macro             0,4903         0,4849
+  Prec-Macro           0,5467         0,5228
+  Rec-Macro            0,5069         0,5063
+  Kappa (quadratic)    0,5556         0,4566
+  -> Random Forest terpilih
+  CATATAN: nilai agregat T2 ini HANYA hidup sebagai desimal di data array
+  Chart.js (0.6639 dst), tidak ada sebagai teks <td> berkoma di #s5.
+  Jadi grep "0,6639" wajar tidak ketemu — itu bukan tanda ada yang hilang.
+
+TUJUAN 3 (4 tile gabungan)
+  F1 Lokalisasi           0,7062   (P=0,7586 · R=0,6606)
+  F1 Damage (harmonic)    0,1406
+  Skor Gabungan xView2    0,3103   (0,3 x F1_lok + 0,7 x HM)
+  mIoU (4 kelas)          0,4005
+
+TABEL PER-TILE #s6
+  Tile       GT Pol.  Pred.  Matched  F1 Lok.  Akurasi Kls.
+  00000163   113      107    66       0,6316   0,5373
+  00000169   155      127    101      0,7247   0,7525
+  00000184   243      180    146      0,6667   0,6986
+  00000195   93       112    86       0,8095   0,8605
+
+LAIN-LAIN
+  Oracle terkontrol: ~0,018 macro-F1, n=399 poligon matched identik
+  Dataset: 18 tile VHR pre & post, 3.271 poligon
+  Recall lokalisasi 0,58 (standalone) -> 0,66 setelah DETECTIONS_PER_IMAGE=500
+
+
+================================================================================
+9. CARA MENGUJI PERUBAHAN (resep yang sudah terbukti jalan di mesin ini)
+================================================================================
+
+Chrome ada di:  $LOCALAPPDATA/Google/Chrome/Application/chrome.exe
+                (BUKAN di "C:/Program Files/..." — sudah dicek, tidak ada)
+Python + Pillow 10.3.0 tersedia. ImageMagick TIDAK ada.
+
+Server lokal:
+    python -m http.server 8099
+
+Screenshot section tertentu — elemen .rv default opacity:0, jadi untuk
+screenshot statis buat salinan sementara dengan reveal dipaksa:
+    .rv { opacity:1 !important; transform:none !important }
+
+    chrome.exe --headless=new --disable-gpu --hide-scrollbars \
+      --window-size=1440,2600 --virtual-time-budget=12000 \
+      --screenshot=out.png "http://localhost:8099/_tmp.html"
+
+Memeriksa perilaku runtime (lebih andal daripada screenshot):
+    chrome.exe --headless=new --disable-gpu --virtual-time-budget=20000 \
+      --dump-dom "https://skripsi-webstories.vercel.app/#s6" \
+      | grep -o 'class="overlay-grid[^"]*"'
+    -> harus memuat " in" kalau reveal bekerja
+
+JEBAKAN PENGUJIAN HEADLESS (penting, sudah menghabiskan waktu):
+  a) --screenshot + --virtual-time-budget membekukan transisi CSS di tengah
+     jalan. Section bisa terlihat KOSONG di screenshot padahal class .in
+     sudah terpasang dengan benar. Untuk memverifikasi reveal, baca DOM
+     (--dump-dom) atau getComputedStyle, JANGAN percaya screenshot.
+  b) Chrome di Windows punya lebar jendela minimum ~485 px. --window-size=390
+     tetap menghasilkan viewport 485 px lalu gambarnya dipotong ke 390 —
+     terlihat seperti overflow horizontal padahal bukan. Untuk uji mobile
+     sungguhan, pakai emulasi devtools, bukan --window-size kecil.
+
+Cek integritas setelah mengedit index.html:
+    - semua angka di bagian 8 masih ada
+    - 3 warna kelas masih ada
+    - "Chart.js/4.4.1/chart.umd.min.js" masih ada
+    - id #s0..#s8 lengkap
+    - jumlah 'class="ov-fig"' = 4
+
+
+================================================================================
+10. YANG BELUM DIKERJAKAN / IDE LANJUTAN
+================================================================================
+
+- Confusion matrix cm_rf_test.png (Tujuan 2) dan cm_t3_test.png (Tujuan 3)
+  belum dipasang ke halaman. File ada di bundle Kaggle.
+- Screenshot artefak HF Spaces (artefak_demo.png) belum dibuat/dipasang.
+- Tile 00000164 tidak tersedia di folder overlay.
+- deploy.yml GitHub Pages bisa dihapus kalau Vercel sudah final.
+- Belum ada favicon / Open Graph meta (preview link saat dibagikan di
+  WhatsApp / Telegram masih polos).
+
+================================================================================
+AKHIR FILE KONTEKS
+================================================================================

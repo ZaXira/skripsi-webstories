@@ -1,0 +1,8 @@
+# File konteks untuk Claude Code — ikut ke repo, tapi jangan tersaji publik
+KONTEKS-SESI.txt
+KODE-LENGKAP.txt
+CLAUDE.md
+
+# Aset sumber (sudah diabaikan .gitignore, ditulis ulang untuk jaga-jaga)
+Tujuan 3/
+*.zip
