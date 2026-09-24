@@ -941,6 +941,32 @@ body.lb-open .theme-btn, body.lb-open .prog-nav { opacity: 0; pointer-events: no
   rvEls.forEach(function(el) { rvIo.observe(el); });
   // hero immediate
   document.querySelectorAll('#s0 .rv').forEach(function(el) { el.classList.add('in'); });
+  // jaring pengaman: deep-link ke #sN atau pergeseran layout (font / canvas chart)
+  // bisa melewati elemen sebelum callback pertama observer sempat jalan
+  var rvSweep = function() {
+    document.querySelectorAll('.rv:not(.in)').forEach(function(el) {
+      var r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight && r.bottom > 0) { el.classList.add('in'); rvIo.unobserve(el); }
+    });
+  };
+  window.addEventListener('load', rvSweep);
+  setTimeout(rvSweep, 500);
+  // deep-link (#sN): posisikan ulang setelah font & canvas chart selesai menata layout
+  if (location.hash) {
+    window.addEventListener('load', function() {
+      var t = document.querySelector(location.hash);
+      if (!t) return;
+      var settle = function() {
+        var root = document.documentElement, prev = root.style.scrollBehavior;
+        root.style.scrollBehavior = 'auto';   // lewati smooth-scroll agar lompatan instan
+        t.scrollIntoView();
+        root.style.scrollBehavior = prev;
+        rvSweep();
+      };
+      setTimeout(settle, 80);
+      setTimeout(settle, 600);
+    });
+  }
 
   /* ---- FEATURE IMPORTANCE BARS ---- */
   var fiWrap = document.querySelector('.fi-wrap');

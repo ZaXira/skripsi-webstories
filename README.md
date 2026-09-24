@@ -4,7 +4,8 @@ Halaman scrollytelling interaktif untuk menyajikan hasil skripsi **"Penilaian Ke
 
 Penulis: **Rafliansyah Tondau** · D-IV Komputasi Statistik · Politeknik Statistika STIS · 2026
 
-Live artefak web (pipeline): https://huggingface.co/spaces/ZaXira/penilaian-kerusakan-lahan
+**Live web stories:** https://skripsi-webstories.vercel.app
+**Live artefak web (pipeline):** https://huggingface.co/spaces/ZaXira/penilaian-kerusakan-lahan
 
 ---
 
@@ -28,6 +29,7 @@ thesis-stories/
 ├── index.html              ← Halaman web stories (satu file, self-contained)
 ├── README.md               ← File ini
 ├── CLAUDE.md               ← Konteks untuk Claude Code (baca ini dulu)
+├── vercel.json             ← Cache header untuk aset di img/
 ├── .gitignore              ← Mengecualikan aset sumber berukuran besar
 ├── img/                    ← Aset web (sudah dioptimasi, ~1 MB total)
 │   ├── overlay_163.webp / .jpg   ← 3-panel viz Tujuan 3 per tile
@@ -67,25 +69,30 @@ python3 -m http.server 8080
 
 ---
 
-## Deploy ke GitHub Pages
+## Deploy
 
-### Otomatis (via GitHub Actions)
+### Vercel (produksi)
 
-Buat repo di GitHub, push semua file, lalu aktifkan Pages dari **Settings → Pages → Source: GitHub Actions**.
+Halaman di-host di Vercel, terhubung ke repo `ZaXira/skripsi-webstories`. Setiap push ke `main` men-deploy otomatis.
 
-File `.github/workflows/deploy.yml` sudah disiapkan — setiap push ke `main` akan mendeploy otomatis.
+| URL | Keterangan |
+|---|---|
+| `https://skripsi-webstories.vercel.app` | **URL produksi — ini yang dibagikan** (publik, tanpa login) |
+| `https://skripsi-webstories-<hash>-rafliansyah.vercel.app` | URL per-deployment, terkunci Vercel Authentication |
 
-> Langkah *Stage site* menyalin isi repo ke `_site/` dengan mengecualikan `Tujuan 3/`, `*.zip`, `CLAUDE.md`, dan `.github/` — jadi hanya `index.html`, `img/`, dan `README.md` yang ter-deploy.
+> **Penting:** URL yang mengandung hash deployment atau akhiran `-rafliansyah` dilindungi *Deployment Protection* — pengunjung tanpa akses akun Vercel akan diarahkan ke halaman login SSO. Untuk dosen penguji, sidang, atau lampiran skripsi, selalu pakai URL produksi di atas.
 
-### Manual
+`vercel.json` mengatur cache header untuk `/img/*` (`max-age=86400` + `stale-while-revalidate`) agar kunjungan berulang tidak mengunduh ulang overlay.
 
-```bash
-git init
-git add .
-git commit -m "init: thesis web stories"
-git remote add origin https://github.com/<USERNAME>/thesis-stories.git
-git push -u origin main
-```
+Tidak ada konfigurasi build — Vercel menyajikan `index.html` apa adanya sebagai situs statis.
+
+### GitHub Pages (cadangan)
+
+`.github/workflows/deploy.yml` masih aktif sebagai jalur deploy kedua. Aktifkan lewat **Settings → Pages → Source: GitHub Actions**.
+
+Langkah *Stage site* menyalin isi repo ke `_site/` dengan mengecualikan `Tujuan 3/`, `*.zip`, `CLAUDE.md`, dan `.github/` — jadi hanya `index.html`, `img/`, `vercel.json`, dan `README.md` yang ter-deploy.
+
+Kalau Vercel sudah cukup, workflow ini aman untuk dihapus.
 
 ---
 
